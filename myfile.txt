@@ -1,0 +1,2 @@
+Hi all I am the file at local machine. 
+will be transferred to EC2 instance.

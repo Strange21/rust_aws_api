@@ -1,0 +1,12 @@
+[package]
+name = "fileupload_ec2"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rusoto_core = "0.48.0"
+rusoto_s3 = "0.48.0"
+ssh2 = "0.9.4"
+openssl = { version = "=0.10.45", features = ["vendored"] }
