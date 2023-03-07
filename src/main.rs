@@ -1,4 +1,5 @@
 use std::{io::{Read, Write}, path::Path, fs};
+use std::{thread, time};
 use aws_sdk_s3::{Client as s3_Client, Region};
 use aws_sdk_secretsmanager::{Client};
 use aws_config::{meta::region::RegionProviderChain, SdkConfig};
@@ -54,17 +55,46 @@ async fn handler() -> Result<Response<Body>, Error>{
 
     // Upload the file to the IPFS network
     let mut channel = sess.channel_session().unwrap();
-    channel.exec("ipfs add /home/ubuntu/rustboot.png").unwrap();// remove the hardcoded value.
+    channel.exec("ipfs add rustboot.png").unwrap();
+    channel.send_eof().unwrap();
+    // channel.exec("ipfs add src").unwrap();
+    thread::sleep(time::Duration::from_secs(2));
     let mut s = String::new();
     channel.read_to_string(&mut s).unwrap();
-    // println!("{}", s);
+    channel.send_eof().unwrap();
+    eprintln!("{}", s);
+    // let mut buf = [0u8; 1024];
+    // loop {
+    //     match channel.read(&mut buf) {
+    //         // the channel has closed and we got an EOF
+    //         Ok(0) => break,
+    //         // We got some data; try to decode it as utf-8
+    //         Ok(c) => {
+    //             let slice = &buf[0..c];
+    //             match std::str::from_utf8(slice) {
+    //                 Ok(s) => print!("{}", s),
+    //                 Err(e) => {
+    //                     // TODO: you should buffer this up and try to stick it together
+    //                     // with the next chunk of data that you read later on
+    //                     eprintln!("output was not utf8: {}", e);
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //         Err(e) => {
+    //             println!("Error while reading: {}", e);
+    //             break;
+    //         }
+    //     }
+    // }
+
     channel.wait_close();
-    println!("{}", channel.exit_status().unwrap());
+    eprintln!("{}", channel.exit_status().unwrap());
 
     let resp = Response::builder()
         .status(200)
         .header("content-type", "text/html")
-        .body(format!("CID {}\n\n",s ).to_string().into())
+        .body(format!("CID {:?} \nChannel exit status {}\n",s, channel.exit_status().unwrap() ).to_string().into())
         .map_err(Box::new)?;
     Ok(resp)
 }
